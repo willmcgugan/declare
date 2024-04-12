@@ -1,3 +1,5 @@
+from typing import List
+
 import declare
 from declare import Declare
 
@@ -52,7 +54,7 @@ def test_watch() -> None:
 
 def test_custom():
     class Foo:
-        things = Declare[list[str]](["foo", "bar"])
+        things = Declare[List[str]](["foo", "bar"])
 
     foo = Foo()
     assert foo.things == ["foo", "bar"]
