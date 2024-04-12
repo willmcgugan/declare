@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import Callable, cast, Generic, overload, Type, TypeVar
+from typing import TYPE_CHECKING, Generic, Type, TypeVar, cast, overload
 
-from typing_extensions import TypeAlias
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from typing_extensions import TypeAlias
 
 
 ObjectType = TypeVar("ObjectType")
 ValueType = TypeVar("ValueType")
-Validator: TypeAlias = Callable[[ObjectType, ValueType], ValueType]
-Watcher: TypeAlias = Callable[[ObjectType, ValueType | None, ValueType], None]
+
+Validator: TypeAlias = "Callable[[ObjectType, ValueType], ValueType]"
+Watcher: TypeAlias = "Callable[[ObjectType, ValueType | None, ValueType], None]"
+
 ValidateMethodType = TypeVar("ValidateMethodType", bound=Validator)
 WatchMethodType = TypeVar("WatchMethodType", bound=Watcher)
 
