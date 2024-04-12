@@ -177,5 +177,10 @@ Python's descriptor protocol has been around forever, but remains a under used f
 
 # Who?
 
-[@willmcgugan](https://twitter.com/willmcgugan)
-[mastodon.social/@willmcgugan](https://mastodon.social/@willmcgugan)
+- [@willmcgugan](https://twitter.com/willmcgugan)
+- [mastodon.social/@willmcgugan](https://mastodon.social/@willmcgugan)
+
+
+# Thanks!
+
+A huge thank you to [Chris Cardillo](https://github.com/chriscardillo) who very kindly let me have the `declare` name on Pypi.
