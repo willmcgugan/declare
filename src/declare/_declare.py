@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import TYPE_CHECKING, Generic, Type, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -150,16 +150,16 @@ class Declare(Generic[ValueType]):
 
     @overload
     def __get__(
-        self: Declare[ValueType], obj: None, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: None, obj_type: type[ObjectType]
     ) -> Declare[ValueType]: ...
 
     @overload
     def __get__(
-        self: Declare[ValueType], obj: ObjectType, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: ObjectType, obj_type: type[ObjectType]
     ) -> ValueType: ...
 
     def __get__(
-        self: Declare[ValueType], obj: ObjectType | None, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: ObjectType | None, obj_type: type[ObjectType]
     ) -> Declare[ValueType] | ValueType:
         if obj is None:
             return self
