@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "declare"
+version = "0.1.0"
+description = "Declare attributes"
+authors = ["Will McGugan <willmcgugan@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+typing-extensions = "^4.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
