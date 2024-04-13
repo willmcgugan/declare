@@ -91,12 +91,14 @@ class Declare(Generic[ValueType]):
         *,
         validate: Validator | None = None,
         watch: Watcher | None = None,
+        on_set: Callable[[object, str, ValueType], None] | None = None,
     ) -> None:
         self._name = ""
         self._private_name = ""
         self._default = default
         self._validator = validate
         self._watcher = watch
+        self._on_set = on_set
         self._copy_default = not isinstance(default, (int, float, bool, str, complex))
 
     def copy(self) -> Declare[ValueType]:
@@ -166,21 +168,18 @@ class Declare(Generic[ValueType]):
             return value
 
     def __set__(self, obj: object, value: ValueType) -> None:
-        if self._watcher:
-            current_value = getattr(obj, self._name, None)
-            new_value = (
-                value if self._validator is None else self._validator(obj, value)
-            )
-            setattr(obj, self._private_name, new_value)
-            if current_value != new_value:
+        current_value = getattr(obj, self._name, None)
+        new_value = (
+            value if self._validator is None else self._validator(obj, value)
+        )
+        setattr(obj, self._private_name, new_value)
+        if current_value != new_value:
+            if self._watcher:
                 self._watcher(obj, current_value, new_value)
 
-        else:
-            setattr(
-                obj,
-                self._private_name,
-                value if self._validator is None else self._validator(obj, value),
-            )
+            # call side effect
+            if callable(self._on_set):
+                self._on_set(obj, self._name, value)
 
     @property
     def optional(self) -> Declare[ValueType | None]:

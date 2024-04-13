@@ -56,3 +56,19 @@ def test_custom():
 
     foo = Foo()
     assert foo.things == ["foo", "bar"]
+
+
+def test_on_set():
+    values: list[tuple[object, str, int]] = []
+
+    def on_set(obj: object, name: str, val: int) -> None:
+        values.append((obj, name, val))
+
+    class Foo:
+        value = Declare[int](1, on_set=on_set)
+
+    foo = Foo()
+    foo.value = 1
+    assert not values
+    foo.value = 2
+    assert values == [(foo, "value", 2)]
