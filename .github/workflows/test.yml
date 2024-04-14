@@ -1,0 +1,37 @@
+name: Test
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Install Poetry
+        run: pipx install poetry==1.8.2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - name: Install dependencies
+        run: poetry install --no-interaction
+      - name: Test with pytest
+        run: |
+          poetry run pytest tests -v
