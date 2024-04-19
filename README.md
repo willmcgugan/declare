@@ -166,7 +166,7 @@ Textual uses a similar approach to declare [reactive attributes](https://textual
 
 This library extracts some of the core features and makes them work without any other dependencies.
 
-There is some overlap with dataclasses, [Pydantic](https://docs.pydantic.dev/latest/), [attrs](https://www.attrs.org/en/stable/), and other similar projects.
+There is some overlap with dataclasses, [traitlets](https://traitlets.readthedocs.io/en/stable/using_traitlets.html), [Pydantic](https://docs.pydantic.dev/latest/), [attrs](https://www.attrs.org/en/stable/), and other similar projects.
 But Declare isn't intended to replace any of these projects, which offer way more features.
 In fact, you can add Declared attributes to the class objects created by these other libraries.
 
