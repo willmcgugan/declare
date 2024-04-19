@@ -1,15 +1,20 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import Callable, cast, Generic, overload, Type, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 
-from typing_extensions import TypeAlias
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from typing_extensions import TypeAlias
 
 
 ObjectType = TypeVar("ObjectType")
 ValueType = TypeVar("ValueType")
-Validator: TypeAlias = Callable[[ObjectType, ValueType], ValueType]
-Watcher: TypeAlias = Callable[[ObjectType, ValueType | None, ValueType], None]
+
+Validator: TypeAlias = "Callable[[ObjectType, ValueType], ValueType]"
+Watcher: TypeAlias = "Callable[[ObjectType, ValueType | None, ValueType], None]"
+
 ValidateMethodType = TypeVar("ValidateMethodType", bound=Validator)
 WatchMethodType = TypeVar("WatchMethodType", bound=Watcher)
 
@@ -145,16 +150,16 @@ class Declare(Generic[ValueType]):
 
     @overload
     def __get__(
-        self: Declare[ValueType], obj: None, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: None, obj_type: type[ObjectType]
     ) -> Declare[ValueType]: ...
 
     @overload
     def __get__(
-        self: Declare[ValueType], obj: ObjectType, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: ObjectType, obj_type: type[ObjectType]
     ) -> ValueType: ...
 
     def __get__(
-        self: Declare[ValueType], obj: ObjectType | None, obj_type: Type[ObjectType]
+        self: Declare[ValueType], obj: ObjectType | None, obj_type: type[ObjectType]
     ) -> Declare[ValueType] | ValueType:
         if obj is None:
             return self
