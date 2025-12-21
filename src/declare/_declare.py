@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
+from typing import Any, TYPE_CHECKING, Generic, Type, TypeVar, cast, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -81,9 +81,7 @@ class WatchDecorator(Generic[WatchMethodType]):
             return self
         assert self._declare is not None
 
-        if self._declare._watcher is not None:
-            raise DeclareError(f"A watcher has already been set on {self._declare!r}")
-        self._declare._watcher = method
+        self._declare._watchers.add(method)
         return method
 
 
@@ -95,13 +93,13 @@ class Declare(Generic[ValueType]):
         default: ValueType,
         *,
         validate: Validator | None = None,
-        watch: Watcher | None = None,
+        watchers: set[Watcher] | None = None,
     ) -> None:
         self._name = ""
         self._private_name = ""
         self._default = default
         self._validator = validate
-        self._watcher = watch
+        self._watchers = set(watchers) if watchers is not None else set()
         self._copy_default = not isinstance(default, (int, float, bool, str, complex))
 
     def copy(self) -> Declare[ValueType]:
@@ -113,7 +111,7 @@ class Declare(Generic[ValueType]):
         declare = Declare(
             self._default,
             validate=self._validator,
-            watch=self._watcher,
+            watchers=set(self._watchers),
         )
         return declare
 
@@ -122,14 +120,14 @@ class Declare(Generic[ValueType]):
         default: ValueType | NoValue = _NO_VALUE,
         *,
         validate: Validator | None = None,
-        watch: Watcher | None = None,
+        watchers: set[Watcher] | None = None,
     ) -> Declare[ValueType]:
         """Update the declaration.
 
         Args:
             default: New default.
             validate: A validator function.
-            watch: A watch function.
+            watchers: A set of watch functions.
 
         Returns:
             A new Declare.
@@ -139,8 +137,8 @@ class Declare(Generic[ValueType]):
             declare._default = default
         if validate is not None:
             declare._validator = validate
-        if watch is not None:
-            declare._watcher = watch
+        if watchers is not None:
+            declare._watchers = set(watchers)
         return declare
 
     def __set_name__(self, owner: Type, name: str) -> None:
@@ -171,14 +169,15 @@ class Declare(Generic[ValueType]):
             return value
 
     def __set__(self, obj: object, value: ValueType) -> None:
-        if self._watcher:
+        if self._watchers:
             current_value = getattr(obj, self._name, None)
             new_value = (
                 value if self._validator is None else self._validator(obj, value)
             )
             setattr(obj, self._private_name, new_value)
             if current_value != new_value:
-                self._watcher(obj, current_value, new_value)
+                for watcher in self._watchers:
+                    watcher(obj, current_value, new_value)
 
         else:
             setattr(
@@ -202,3 +201,19 @@ class Declare(Generic[ValueType]):
     def watch(self) -> WatchDecorator:
         """Decorator to create a watcher."""
         return WatchDecorator(self)
+
+
+def watch(
+    obj: ObjectType,
+    attribute_name: str,
+    callback: Watcher,
+):
+    declare: Declare = getattr(obj.__class__, attribute_name)
+
+    def _callback(_obj: ObjectType, old: Any, new: Any):
+        if _obj != obj:
+            return
+
+        callback(obj, old, new)
+
+    declare._watchers.add(_callback)

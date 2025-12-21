@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ._declare import Declare as Declare
+from ._declare import watch as watch
 
 __all__ = [
     "Declare",
@@ -9,6 +10,7 @@ __all__ = [
     "Bool",
     "Str",
     "Bytes",
+    "watch",
 ]
 
 Int: type[Declare[int]] = Declare
