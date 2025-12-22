@@ -1,5 +1,7 @@
 from typing import List
 
+import pytest
+
 import declare
 from declare import Declare, watch
 
@@ -18,6 +20,18 @@ def test_predefined():
     assert foo.my_bool == True
     assert foo.my_str == "Foo"
     assert foo.my_bytes == b"bar"
+
+
+def test_collections():
+    class Foo:
+        my_list = declare.List([])
+        my_list2 = declare.List(["alpha", "beta", "gamma"])
+        counts = declare.Dict[str, int]({"foo": 1})
+
+    foo = Foo()
+    assert foo.my_list == []
+    assert foo.my_list2 == ["alpha", "beta", "gamma"]
+    assert foo.counts == {"foo": 1}
 
 
 def test_validate():
@@ -39,7 +53,6 @@ def test_watch() -> None:
     changes0: list[tuple[int, int]] = []
     changes1: list[tuple[int, int]] = []
     changes2: list[tuple[int, int]] = []
-    changes3: list[tuple[int, int]] = []
 
     class Foo:
         value0 = declare.Int(0)
@@ -62,7 +75,7 @@ def test_watch() -> None:
     assert changes1 == [(0, 1), (1, 2)]
 
     def callback(obj: Foo, old: int, new: int):
-        changes3.append((old, new))
+        changes2.append((old, new))
 
     foo1 = Foo()
     watch(foo0, "value1", callback)
@@ -70,7 +83,7 @@ def test_watch() -> None:
     foo1.value1 = 4
     assert changes0 == [(0, 1), (1, 2)]
     assert changes1 == [(0, 1), (1, 2)]
-    assert changes3 == [(0, 3)]
+    assert changes2 == [(0, 3)]
 
 
 def test_custom():
@@ -79,3 +92,22 @@ def test_custom():
 
     foo = Foo()
     assert foo.things == ["foo", "bar"]
+
+
+def test_declare_set():
+    class Foo:
+        count = declare.Int(0)
+
+        @count.watch
+        def watch_count(self, before: int, after: int):
+            1 / 0
+
+    f = Foo()
+    # Watcher will be called on attribute set
+    with pytest.raises(ZeroDivisionError):
+        f.count = 5
+
+    # Watcher will not be called
+    Foo.count.set(f, 5)
+    # Value should be changed
+    assert f.count == 5

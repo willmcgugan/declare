@@ -1,18 +1,21 @@
-[tool.poetry]
+[project]
 name = "declare"
 version = "1.0.1"
 description = "Declare attributes"
-authors = ["Will McGugan <willmcgugan@gmail.com>"]
-license = "MIT"
+authors = [
+    {name = "Will McGugan", email = "willmcgugan@gmail.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.8"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = "^3.8"
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=8.1.1"
-mypy = ">=1.9.0"
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.1",
+    "mypy>=1.9.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

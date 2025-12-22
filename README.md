@@ -2,7 +2,7 @@
 
 Declare is a syntactical sugar for adding attributes to Python classes, with support for validation and *watching* attributes for changes.
 
-Declare works well with type-checkers such as MyPy, even though in many cases you don't need to write type annotations.
+Declare works well with type-checkers such as MyPy, often without the need for explicit type declarations.
 
 ## Example
 
@@ -24,8 +24,9 @@ class Color:
 
 If you construct a `Color` instance, it will have the four attributes.
 
-Perhaps surprisingly, these attributes are typed -- without any explicit type annotations.
+Perhaps surprisingly, these attributes are typed — without any explicit type annotations.
 Mypy and other type-checkers will understand that `Color` instances have three `int` attributes, and an additional `float` for alpha.
+
 
 ### Validation
 
@@ -48,12 +49,12 @@ class Color:
     @red.validate
     @green.validate
     @blue.validate
-    def _validate_component(self, component: int) -> int:
+    def validate_component(self, component: int) -> int:
         """Restrict RGB to 0 -> 255."""
         return max(0, min(255, component))
 
     @alpha.validate
-    def _validate_alpha(self, alpha: float) -> float:
+    def validate_alpha(self, alpha: float) -> float:
         return max(0.0, min(1.0, alpha))
 ```
 
@@ -85,22 +86,29 @@ class Color:
     @red.validate
     @green.validate
     @blue.validate
-    def _validate_component(self, component: int) -> int:
+    def validate_component(self, component: int) -> int:
         """Restrict RGB to 0 -> 255."""
         return max(0, min(255, component))
 
     @alpha.validate
-    def _validate_alpha(self, alpha: float) -> float:
+    def validate_alpha(self, alpha: float) -> float:
         return max(0.0, min(1.0, alpha))
 
     @alpha.watch
-    def _watch_alpha(self, old_alpha: float, alpha: float) -> None:
+    def watch_alpha(self, old_alpha: float, alpha: float) -> None:
         print(f"alpha changed from {old_alpha} to {alpha}!")
 ```
 
 The addition of the `@alpha.watch` decorator will cause the `_watch_alpha` method to be called when any value is assigned to the `alpha` attribute.
 
+
+### Container types
+
+
+
 ### Declare types
+
+
 
 In the above code `declare.Int` and `declare.Float` are pre-defined declarations for standard types (there is also `Bool`, `Str`, and `Bytes`).
 You can also also declare custom type by importing `Declare`.
@@ -109,7 +117,6 @@ let's add a `Palette` class which contains a name, and a list of colors:
 
 ```python
 import declare
-from declare import Declare
 
 
 class Color:
@@ -123,23 +130,23 @@ class Color:
     @red.validate
     @green.validate
     @blue.validate
-    def _validate_component(self, component: int) -> int:
+    def validate_component(self, component: int) -> int:
         """Restrict RGB to 0 -> 255."""
         return max(0, min(255, component))
 
     @alpha.validate
-    def _validate_alpha(self, alpha: float) -> float:
+    def validate_alpha(self, alpha: float) -> float:
         return max(0.0, min(1.0, alpha))
 
     @alpha.watch
-    def _watch_alpha(self, old_alpha: float, alpha: float) -> None:
+    def watch_alpha(self, old_alpha: float, alpha: float) -> None:
         print(f"alpha changed from {old_alpha} to {alpha}!")
 
 
 class Palette:
-    """A container of colors."""
     name = declare.Str("")
-    colors = Declare[list[Color]]([])
+    colors = declare.List[Color]([])
+
 
 ```
 

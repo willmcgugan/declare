@@ -1,7 +1,21 @@
 from __future__ import annotations
 
 from copy import copy
-from typing import Any, TYPE_CHECKING, Generic, Type, TypeVar, cast, overload
+from functools import wraps
+
+import inspect
+
+from typing import (
+    Any,
+    TYPE_CHECKING,
+    Generic,
+    Iterable,
+    Type,
+    TypeVar,
+    cast,
+    Callable,
+    overload,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -81,8 +95,31 @@ class WatchDecorator(Generic[WatchMethodType]):
             return self
         assert self._declare is not None
 
-        self._declare._watchers.add(method)
+        self._declare._watchers.append(method)
         return method
+
+
+class Initialize(Generic[ValueType]):
+    """Initialize a reactive by calling a method parent object.
+
+    Example:
+        ```python
+            class InitializeApp(App):
+
+                def get_names(self) -> list[str]:
+                    return ["foo", "bar", "baz"]
+
+                # The `names` property will call `get_names` to get its default when first referenced.
+                names = reactive(Initialize(get_names))
+        ```
+
+    """
+
+    def __init__(self, callback: Callable[[Any], ValueType]) -> None:
+        self.callback = callback
+
+    def __call__(self, obj: Any) -> ValueType:
+        return self.callback(obj)
 
 
 class Declare(Generic[ValueType]):
@@ -90,16 +127,21 @@ class Declare(Generic[ValueType]):
 
     def __init__(
         self,
-        default: ValueType,
+        default: ValueType | Callable[..., ValueType],
         *,
         validate: Validator | None = None,
-        watchers: set[Watcher] | None = None,
+        watch: Watcher | Iterable[Watcher] | None = None,
+        init: bool = False,
     ) -> None:
         self._name = ""
         self._private_name = ""
         self._default = default
         self._validator = validate
-        self._watchers = set(watchers) if watchers is not None else set()
+        if watch is None:
+            self._watchers = []
+        else:
+            self._watchers = [watch] if callable(watch) else list(watch)
+        self._init = init
         self._copy_default = not isinstance(default, (int, float, bool, str, complex))
 
     def copy(self) -> Declare[ValueType]:
@@ -111,9 +153,31 @@ class Declare(Generic[ValueType]):
         declare = Declare(
             self._default,
             validate=self._validator,
-            watchers=set(self._watchers),
+            watch=self._watchers.copy(),
         )
         return declare
+
+    def set(
+        self,
+        object: object,
+        value: ValueType,
+        *,
+        watch: bool = False,
+        validate: bool = True,
+    ) -> None:
+        """Set a value without invoking watchers or validators.
+
+        Args:
+            object: Parent object to set.
+            value: New value.
+        """
+        if validate and self._validator is not None:
+            value = self._validator(object, value)
+
+        if watch:
+            setattr(object, self._private_name, value)
+        else:
+            setattr(object, self._name, value)
 
     def __call__(
         self,
@@ -162,7 +226,19 @@ class Declare(Generic[ValueType]):
         if obj is None:
             return self
         if isinstance((value := getattr(obj, self._private_name, _NO_VALUE)), NoValue):
-            value = copy(self._default) if self._copy_default else self._default
+            if callable(self._default):
+                if inspect.isfunction(self._default):
+                    # Default is a function
+                    # If the default does not have a `__func__` attribute is unbound, so call it with the object
+                    value: ValueType = (
+                        self._default(obj)
+                        if len(inspect.signature(self._default).parameters) == 1
+                        else self._default()
+                    )
+                else:
+                    value = self._default()
+            else:
+                value = copy(self._default) if self._copy_default else self._default
             setattr(obj, self._private_name, value)
             return value
         else:
@@ -216,4 +292,4 @@ def watch(
 
         callback(obj, old, new)
 
-    declare._watchers.add(_callback)
+    declare._watchers.append(_callback)
